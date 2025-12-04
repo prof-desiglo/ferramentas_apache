@@ -1,0 +1,76 @@
+
+networks:
+  hadoop-net:
+    name: hadoopnet  #MESMA REDE do Hadoop
+    external: true  # Se a rede já existe
+
+services:
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    hostname: spark-master
+    networks:
+      - hadoop-net  # CONECTADO À MESMA REDE
+    ports:
+      - "8080:8080"   # Spark Master UI
+      - "7077:7077"   # Spark Master
+      - "4040:4040"   # Spark App UI
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+      - SPARK_MASTER_HOST=spark-master
+      # CONFIGURAÇÕES HDFS (usando DNS dos containers)
+      - SPARK_HADOOP_FS_DEFAULTFS=hdfs://namenode:9000
+    volumes:
+      - ./spark-config:/opt/spark/conf
+      - ./scripts:/opt/scripts
+      - ./data:/data
+    command: >
+      bash -c "
+      mkdir -p /opt/spark/logs &&
+      /opt/spark/sbin/start-master.sh &&
+      echo 'Spark Master started successfully!' &&
+      tail -f /opt/spark/logs/spark*master*.out
+      "
+
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    hostname: spark-worker
+    networks:
+      - hadoop-net  # MESMA REDE
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_WEBUI_PORT=8081
+      - SPARK_WORKER_HOST=spark-worker
+    ports:
+      - "8081:8081"
+    command: >
+      bash -c "
+      sleep 10 &&
+      /opt/spark/sbin/start-worker.sh spark://spark-master:7077 &&
+      tail -f /opt/spark/logs/spark*worker*.out
+      "
+
+  spark-client:
+    image: apache/spark:3.5.1
+    container_name: spark-client
+    hostname: spark-client
+    networks:
+      - hadoop-net
+    volumes:
+      - ./scripts:/opt/scripts
+      - ./data:/data
+      - ./notebooks:/opt/notebooks
+    environment:
+      # NÃO precisa de extra_hosts - DNS automático
+      - SPARK_HADOOP_FS_DEFAULTFS=hdfs://namenode:9000
+    stdin_open: true
+    tty: true
+    command: /bin/bash
