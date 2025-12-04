@@ -1,4 +1,8 @@
+hdfs dfs -mkdir -p /data/results
+hdfs dfs -chmod 644 /data/results
+echo 'Criada pasta de resultados!'
 hdfs dfs -mkdir -p /user/hadoop
+echo 'Criada pasta do hadoop!'
 hdfs dfs -put /tmp/movies.csv /user/hadoop/
 hdfs dfs -chmod 644 /user/hadoop/movies.csv
 echo 'Arquivo no HDFS:'
