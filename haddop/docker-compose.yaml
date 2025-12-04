@@ -45,7 +45,9 @@ services:
 
 networks:
   hadoopnet:
+    name: hadoopnet
     driver: bridge
     ipam:
       config:
         - subnet: 172.8.0.0/16
+
