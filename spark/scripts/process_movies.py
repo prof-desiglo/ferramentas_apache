@@ -71,7 +71,7 @@ ERRO: Argumento --input é obrigatório!
         .config("spark.driver.memory", "1g") \
         .getOrCreate()
     
-    print(f Spark configurado para HDFS: {hdfs_base_url}")
+    print(f" Spark configurado para HDFS: {hdfs_base_url}")
     
     try:
         # 1. CARREGAR DADOS
